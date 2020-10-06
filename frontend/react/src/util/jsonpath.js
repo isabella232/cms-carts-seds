@@ -15,8 +15,42 @@
  */
 const jsonpath = require("jsonpath");
 
-// Map of generic paths to their exact counterparts
-const exactPathMap = {};
+// Map of generic paths to their exact counterparts. If there's a cache in
+// local storage, optimistically assume we can use it and load it now.
+const exactPathMap = window.localStorage?.getItem("CARTS_FORM_JSON_PATHS")
+  ? JSON.parse(window.localStorage.getItem("CARTS_FORM_JSON_PATHS"))
+  : {};
+
+if (window.localStorage) {
+  // Get a hash of the previous form structure, then remove the stored hash.
+  const previousHash = window.localStorage.getItem("CARTS_FORM_HASH");
+  window.localStorage.setItem("CARTS_FORM_HASH", "");
+
+  // Check regularly to see if the hash has been set again. If it has, we can
+  // stop waiting.
+  const waiter = setInterval(() => {
+    const newHash = window.localStorage.getItem("CARTS_FORM_HASH");
+    if (newHash.length > 0) {
+      // If the new hash is different from the old hash, then the form structure
+      // has changed and we probably shouldn't rely on this cache. Clear it out.
+      if (newHash !== previousHash) {
+        Object.keys(exactPathMap).forEach((key) => {
+          delete exactPathMap[key];
+        });
+      }
+      clearInterval(waiter);
+    }
+  }, 30);
+}
+
+const persist = window.localStorage
+  ? (data) => {
+      window.localStorage.setItem(
+        "CARTS_FORM_JSON_PATHS",
+        JSON.stringify(data)
+      );
+    }
+  : () => {};
 
 const getExactPath = (data, path) => {
   let exact = exactPathMap[path];
@@ -36,8 +70,8 @@ const getExactPath = (data, path) => {
       // end with [0]. But that's not what is being requested: the [*] at the
       // end means the request is for ALL of the things, not the first, so in
       // that case, replace [0] at the end of the exact path with [*].
-      if(path.endsWith('[*]')) {
-        exact = exact.replace(/\[0\]$/, '[*]');
+      if (path.endsWith("[*]")) {
+        exact = exact.replace(/\[0\]$/, "[*]");
       }
     } else {
       // If there is NOT a matching path, cache the inexact path so we don't
@@ -46,6 +80,7 @@ const getExactPath = (data, path) => {
     }
 
     exactPathMap[path] = exact;
+    persist(exactPathMap);
   }
 
   return exact;

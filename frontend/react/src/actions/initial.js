@@ -1,6 +1,7 @@
 import axios from "axios";
 import { getProgramData, getStateData, getUserData } from "../store/stateUser";
 import forwardedQueryString from "../util/devQueryString";
+import { setFormHash } from "../util/hash";
 
 export const LOAD_SECTIONS = "LOAD SECTIONS";
 export const GET_ALL_STATES_DATA = "GET_ALL_STATES_DATA";
@@ -43,6 +44,8 @@ export const loadSections = ({ userData, headers, stateCode }) => {
       dispatch({ type: LOAD_SECTIONS, data: [] });
       throw err;
     });
+
+    await setFormHash(data);
 
     dispatch({ type: LOAD_SECTIONS, data });
   };
