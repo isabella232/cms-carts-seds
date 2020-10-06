@@ -1,16 +1,16 @@
+
 version: "3.4"
 services:
   postgres:
-    build:
-      context: ./postgres
-      dockerfile: Dockerfile
-      target: postgres
     image: postgres:9.6.9
     ports:
       - "5432:5432"
     networks:
       - net
+    volumes:
+      - /app/pgdata
     environment:
+      - PGDATA=/app/pgdata
       - POSTGRES_DB=postgres
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres

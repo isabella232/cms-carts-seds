@@ -20,7 +20,8 @@ done
 
 echo "PostgreSQL started"
 
-CHK_LOAD=$(PGPASSWORD=$POSTGRES_PASSWORD psql -d $POSTGRES_DB -h $POSTGRES_HOST -U $POSTGRES_USER -p 5432 -t -w -c "select current_setting('db.load', true);")
+CHK_LOAD=$(sed 's/ //g' <<< $(PGPASSWORD=$POSTGRES_PASSWORD psql -d $POSTGRES_DB -h $POSTGRES_HOST -U $POSTGRES_USER -p 5432 -t -w -c "select current_setting('db.load', true);"))
+echo "Flag 'db.load' is set to \"${CHK_LOAD}\"." 2>&1
 
 if [ "${CHK_LOAD}" != "1" ]
 then
@@ -37,7 +38,7 @@ then
   # Download extracts from S3 bucket
   curl https://mdct-legacy-snapshot.s3.amazonaws.com/dev/pg_mdct_extracts.tgz -o /app/pg_mdct_extracts.tgz
   # Unzip the dumps
-  if [ -f /app/pg_mdct_extracts.tgz ] 
+  if [ -f /app/pg_mdct_extracts.tgz ]
   then
     tar -xzvf /app/pg_mdct_extracts.tgz
   fi
