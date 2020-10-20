@@ -4,7 +4,7 @@ import { TextField } from "@cmsgov/design-system-core";
 import PropTypes from "prop-types";
 import uuid from "react-uuid";
 
-// This method checks that month input is appropriate
+// This method checks that month input is appropriate:
 // (not empty, max of 2 digits, no letters, between 1 & 12)
 const validateMonth = (input) => {
   let returnString;
@@ -89,21 +89,25 @@ class DateRange extends Component {
 
   // This method checks all 4 fields to confirm that the start range is before the end range
   checkChronology() {
+    const { onChange, question } = this.props;
     const {
-      monthStart,
-      monthEnd,
       yearStart,
       yearEnd,
       startErrorMessage,
       endErrorMessage,
     } = this.state;
-    const errorCheck = [...startErrorMessage, ...endErrorMessage];
-    const { onChange, question } = this.props;
+    const errorCheck = [...startErrorMessage, ...endErrorMessage]; // Array of all input errors in state
+
+    let { monthStart, monthEnd } = this.state;
     let chronologyError;
 
     // Ensure that all 4 fields are filled in
     if (monthStart && monthEnd && yearStart && yearEnd) {
       // Turn the input into date objects for easy comparison
+
+      monthStart = monthStart.padStart(2, "0");
+      monthEnd = monthEnd.padStart(2, "0");
+
       const startDate = new Date(yearStart, monthStart - 1);
       const endDate = new Date(yearEnd, monthEnd - 1);
 
@@ -119,14 +123,10 @@ class DateRange extends Component {
         chronologyError = true;
       } else {
         chronologyError = false;
-        if (errorCheck.some((element) => element !== undefined)) {
-          // console.log("ONNNN", "\n", "CHANGE", "\n", "TRIGGERED");
-          // console.log(errorCheck);
+        if (errorCheck.every((element) => element === undefined)) {
+          // If there are no errors present in state
           onChange([question.id, payload]); // Chronology is correct, no errors present, send data to redux
         }
-        // check state for any errors at all
-        // 1: Join arrays and check for anything with length?
-        // 2: Join arrays and check for anything that is not undefined?
       }
 
       this.setState({
@@ -178,11 +178,14 @@ class DateRange extends Component {
     startErrorArray.push(validateMonth(monthStart));
     startErrorArray.push(this.validateYear(yearStart));
 
-    this.setState({
-      startErrorMessage: startErrorArray,
-    });
-
-    this.checkChronology();
+    this.setState(
+      {
+        startErrorMessage: startErrorArray,
+      },
+      () => {
+        this.checkChronology();
+      }
+    );
   }
 
   // This method checks the second month/year input range and sets any validation errors to state
@@ -194,11 +197,14 @@ class DateRange extends Component {
     endErrorArray.push(validateMonth(monthEnd));
     endErrorArray.push(this.validateYear(yearEnd));
 
-    this.setState({
-      endErrorMessage: endErrorArray,
-    });
-
-    this.checkChronology();
+    this.setState(
+      {
+        endErrorMessage: endErrorArray,
+      },
+      () => {
+        this.checkChronology();
+      }
+    );
   }
 
   // This method takes all user input and sets it to state
@@ -207,6 +213,8 @@ class DateRange extends Component {
       [evt.target.name]: evt.target.value ? evt.target.value : "",
     });
   }
+
+  // Store input values temporarily via input refs
 
   render() {
     const { question } = this.props;
