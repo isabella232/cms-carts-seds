@@ -1,6 +1,7 @@
 from django.contrib.auth.models import Group, User  # type: ignore
 from rest_framework import authentication  # type: ignore
 from rest_framework import exceptions
+from django.conf import settings
 from carts.oidc import (
     extract_kid,
     fetch_pub_key,
@@ -20,6 +21,9 @@ from carts.carts_api.model_utils import role_from_raw_ldap_job_codes
 
 class JwtAuthentication(authentication.BaseAuthentication):
     def authenticate(self, request):
+
+        print(f"discovery url: {settings.JWT_AUTHENTICATION['OPENID_DISCOVERY_URL']}")
+        
         raw_token = self._extract_token(request)
 
         try:
